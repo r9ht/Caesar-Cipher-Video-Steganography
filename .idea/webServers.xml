@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="f00f71c9-6ccf-4103-b18c-e5edc2b5bee8" name="Remote" url="http://192.168.1.5">
+        <fileTransfer host="192.168.1.5" port="22" rootFolder="/home/ccvs" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

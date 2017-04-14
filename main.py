@@ -4,7 +4,7 @@ from functions import *
 if __name__ == '__main__':
 
     # cool boi
-
+    #
     # f = Figlet(font='slant')
     # print(f.renderText("CCVS"))
     # print("CaesarCypherVideoSteganography")
@@ -16,9 +16,9 @@ if __name__ == '__main__':
     # print("====Johan Eko P.===")
     # print("===Wiladhianty Y.==")
     #
-    #
 
-    file_name = input("Filename ? : ")
+
+    file_name = raw_input("Filename ? : ")
     img = Image.open("temp/"+file_name)
     print(img,img.mode)
 
