@@ -27,33 +27,6 @@ def frame_extract(video):
         cv2.imwrite(os.path.join(temp_folder, "{:d}.png".format(count)), image)
         count += 1
 
-def frame_merge(dir_path,output_name):
-    images = []
-    frame_count = len(os.listdir(dir_path))
-
-    for i in range(frame_count):
-        images.append(str(i)+".png")
-
-    sample_image = os.path.join(dir_path,images[0])
-    sample_frame = cv2.imread(sample_image)
-    height,width,channels = sample_frame.shape
-
-    fourcc = cv2.cv.CV_FOURCC('R','A','W',' ')
-    out = cv2.VideoWriter(output_name, fourcc, 30.0, (width, height))
-
-    for i in range(frame_count-1):
-        image_path = os.path.join(dir_path,str(i)+".png")
-        frame = cv2.imread(image_path)
-        out.write(frame)
-        cv2.namedWindow('CCVS-Merging', cv2.WINDOW_NORMAL)
-        cv2.imshow('CCVS-Merging',frame)
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):  # Hit `q` to exit
-            break
-
-    out.release()
-    cv2.destroyAllWindows()
-
-
 
 def remove(path):
     """ param <path> could either be relative or absolute. """
