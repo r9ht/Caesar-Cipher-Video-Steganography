@@ -7,7 +7,7 @@ Dependencies :
 * ffmpeg
 * opencv 
 * PIL
-
+* pyfiglet
 
 Usage : 
 
