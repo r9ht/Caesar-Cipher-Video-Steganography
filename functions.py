@@ -7,6 +7,7 @@ import shutil,cv2,os
 # http://zulko.github.io/blog/2013/09/27/read-and-write-video-frames-in-python-using-ffmpeg/
 # http://tsaith.github.io/combine-images-into-a-video-with-python-3-and-opencv-3.html
 
+# Fauzanil Zaki , 2017
 
 def frame_extract(video):
     temp_folder = 'temp'
@@ -23,35 +24,35 @@ def frame_extract(video):
         success, image = vidcap.read()
         if not success:
             break
-        cv2.imwrite(os.path.join(temp_folder, "{:d}.jpg".format(count)), image)
+        cv2.imwrite(os.path.join(temp_folder, "{:d}.png".format(count)), image)
         count += 1
 
-def frame_merge(dir_path,img_ext,output_name):
+def frame_merge(dir_path,output_name):
     images = []
     frame_count = len(os.listdir(dir_path))
 
     for i in range(frame_count):
-        images.append(str(i)+".jpg")
+        images.append(str(i)+".png")
 
     sample_image = os.path.join(dir_path,images[0])
     sample_frame = cv2.imread(sample_image)
     height,width,channels = sample_frame.shape
 
-    fourcc = cv2.cv.CV_FOURCC(*'MP4V')
+    fourcc = cv2.cv.CV_FOURCC('R','A','W',' ')
     out = cv2.VideoWriter(output_name, fourcc, 30.0, (width, height))
-    images.sort()
-    for i in range(frame_count):
-        image_path = os.path.join(dir_path,str(i)+".jpg")
+
+    for i in range(frame_count-1):
+        image_path = os.path.join(dir_path,str(i)+".png")
         frame = cv2.imread(image_path)
         out.write(frame)
-        cv2.imshow('video',frame)
+        cv2.namedWindow('CCVS-Merging', cv2.WINDOW_NORMAL)
+        cv2.imshow('CCVS-Merging',frame)
         if (cv2.waitKey(1) & 0xFF) == ord('q'):  # Hit `q` to exit
             break
 
     out.release()
     cv2.destroyAllWindows()
 
-    print("The output video is {}".format(output_name))
 
 
 def remove(path):
@@ -65,65 +66,109 @@ def remove(path):
 
 
 
-
-def encode_frame(frame,msg):
-
-    # using the red channel to hide ASCII values
-
-    length = len(msg)
-
-    # limit text to 255 for each frame
-
-    if length > 255:
-        print("text too long! (don't exeed 255 characters)")
-        return False
-    if frame.mode != 'RGB' :
-        print("Image must be in RGB format")
-        return False
-
-    # use a copy of image to hide the text in
-
-    encoded = frame.copy()
-    width,height = frame.size
-    index = 0
-    for row in range(height):
-        for col in range(width):
-            r,g,b = frame.getpixel((col,row))
-
-            # first value is length of the message per frame
-            if row == 0 and col == 0 and index < length:
-                asc = length
-            elif index <= length:
-                c = msg[index -1]
-                asc = ord(c)
-            else:
-                asc = r
-            encoded.putpixel((col,row),(asc,g,b))
-            index += 1
-    return encoded
+def split2len(s, n):
+    def _f(s, n):
+        while s:
+            yield s[:n]
+            s = s[n:]
+    return list(_f(s, n))
 
 
-def decode_frame(frame):
 
-    width,height = frame.size
-    msg = ""
-    index = 0
-    for row in range(height):
-        for col in range(width):
-            try:
+
+def caesar_ascii(char,mode,n):
+    if mode == "enc" :
+        ascii = ord(char)
+        return chr((ascii + n) % 128)
+    elif mode == "dec" :
+        ascii = ord(char)
+        return chr((ascii - n) % 128)
+
+
+def encode_frame(frame_dir,text_to_hide,caesarn):
+
+
+
+    # open the text file
+
+    text_to_hide_open = open(text_to_hide, "r")
+    text_to_hide = repr(text_to_hide_open.read())
+
+    # split text to max 255 char each
+
+    text_to_hide_chopped =  split2len(text_to_hide,255)
+
+    for text in text_to_hide_chopped:
+        length = len(text)
+        chopped_text_index = text_to_hide_chopped.index(text)
+        frame = Image.open(str(frame_dir) +"/" + str(chopped_text_index+1) + ".png")
+
+        if frame.mode != "RGB":
+            print("Source frame must be in RGB format")
+            return False
+
+        # use copy of the file
+
+        encoded = frame.copy()
+        width, height = frame.size
+
+        index = 0
+        a = object
+        for row in range(height):
+            for col in range(width):
                 r,g,b = frame.getpixel((col,row))
-            except ValueError:
-                # for some png a(transparency) is needed
-                r,g,b,a = frame.getpixel((col,row))
-            # first pixel is the information about length of the message
-            if row == 0 and col == 0:
-                length = r
-            elif index <= length:
-                msg += chr(r)
-            index += 1
-    return msg
 
+                # first value is length of the message per frame
+                if row == 0 and col == 0 and index < length:
+                    asc = length
+                    if text_to_hide_chopped.index(text) == 0 :
+                        total_encoded_frame = len(text_to_hide_chopped)
+                    else:
+                        total_encoded_frame = g
+                elif index <= length:
+                    c = text[index -1]
+                    # put the encypted character into ascii value
+                    asc = ord(caesar_ascii(c,"enc",caesarn))
+                    total_encoded_frame = g
+                else:
+                    asc = r
+                    total_encoded_frame = g
+                encoded.putpixel((col,row),(asc,total_encoded_frame,b))
+                index += 1
+        if encoded:
+            encoded.save(str(frame_dir)+"/"+str(chopped_text_index+1) + ".png",compress_level=0)
 
+def decode_frame(frame_dir,caesarn):
+
+    #take the first frame to get width, height, and total encoded frame
+
+    # first_frame = Image.open(str(frame_dir) + "/0.jpg")
+    first_frame = Image.open(str(frame_dir)+ "/" + "1.png")
+    r,g,b = first_frame.getpixel((0,0))
+    total_encoded_frame = g
+    msg = ""
+    for i in range (1,total_encoded_frame+1):
+        frame = Image.open(str(frame_dir) + "/" + str(i) + ".png")
+        width, height = frame.size
+        index = 0
+        for row in range(height):
+            for col in range(width):
+                try :
+                    r,g,b = frame.getpixel((col,row))
+                except ValueError:
+
+                    # for some ong a(transparancy) is needed
+                    r, g, b, a = frame.getpixel((col, row))
+                if row == 0 and col == 0:
+                    length = r
+                elif index <= length:
+                    # put the decrypted character into string
+                    msg += caesar_ascii(chr(r),"dec",caesarn)
+                index +=1
+    #remove the first and the last quote
+    msg = msg[1:-1]
+    recovered_txt = open("data/recovered-text.txt", "w")
+    recovered_txt.write(str(msg.decode('string_escape')))
 
 
 
