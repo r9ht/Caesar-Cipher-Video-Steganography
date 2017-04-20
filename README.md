@@ -1,4 +1,4 @@
-# CaesarCipher-Video-Steganography(CCVS)
+# Caesar-Cipher-Video-Steganography(CCVS)
 
 CCVS is a simple program written in python to hide encrypted text using simple caesar cipher in video frames, the encryption algorithm could be easily changed because the cipher algorithm is loosly coupled. 
 
